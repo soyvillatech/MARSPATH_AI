@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ChevronDown, Database, Download, Info, Layers, Menu, Satellite, Settings, Trash2, X } from 'lucide-react';
 import './styles.css';
@@ -18,6 +18,17 @@ function App() {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setDetailsOpen(false);
+      setLayersOpen(false);
+      setResultsOpen(false);
+      setPlannerOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, []);
   const selectedRoute = p.routes.find(route => route.id === p.selected);
   const exportRoute = () => { if (!selectedRoute) return; const blob = new Blob([JSON.stringify({ type:'Feature', properties:{ id:selectedRoute.id, kind:selectedRoute.kind, metrics:selectedRoute.metrics }, geometry:selectedRoute.geometry }, null, 2)], {type:'application/geo+json'}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download=`marspath-${selectedRoute.id}.geojson`; link.click(); URL.revokeObjectURL(url); };
   return <div className="map-first-app">
