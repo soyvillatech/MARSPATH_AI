@@ -1,0 +1,10 @@
+{
+  "region":"Jezero Crater, Mars",
+  "policy":"Real observations and products are separated from browser calculations and simulations.",
+  "sources":[
+    {"id":"nasa-trek-jezero","provider":"NASA / Solar System Treks","dataset":"JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd","mission":"Mars Reconnaissance Orbiter / HiRISE","resolution":"25 cm mosaic product","coverage":"77.2229–77.5840 E; 18.3068–18.6693 N","type":"WMTS raster imagery","url":"https://trek.nasa.gov/mars/","role":"Basemap only; not elevation."},
+    {"id":"nasa-trek-mola","provider":"NASA / Solar System Treks","dataset":"Mars_MGS_MOLA_ClrShade_merge_global_463m","mission":"Mars Global Surveyor / MOLA","resolution":"463 m global map layer","coverage":"Global Mars","type":"WMTS raster hillshade","url":"https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars","role":"Topographic visualization."},
+    {"id":"pds-mola-megdr","provider":"NASA PDS Geosciences Node","dataset":"MGS MOLA Topography Derived / MEGDR","mission":"Mars Global Surveyor / MOLA","resolution":"4–128 px/degree product families","coverage":"Global Mars","type":"Gridded elevation","url":"https://pds-geosciences.wustl.edu/missions/mgs/megdr.html","role":"Elevation source for the DEM grid."},
+    {"id":"usgs-mars-maps","provider":"USGS Astrogeology","dataset":"Mars interactive maps and geological products","mission":"USGS planetary cartography","resolution":"Product-dependent","coverage":"Mars regional products","type":"Geologic and raster/vector products","url":"https://astrogeology-usgs.hub.arcgis.com/pages/interactive-maps-mars","role":"Geologic context."}
+  ]
+}
