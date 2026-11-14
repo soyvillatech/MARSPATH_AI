@@ -59,6 +59,7 @@ export function usePlanning(){
       setRoutes(result.routes);setRecommended(result.recommended_route_id);setSelected(result.recommended_route_id);setMessage(result.message);setFocus(f=>f+1);
     }catch(e){if(version===revision.current&&!controller.signal.aborted)setMessage((e as Error).message);}finally{if(version===revision.current)setBusy(false);}
   }
-  return {metadata,hazards,origin,destination,mode,setMode,objective,setObjective:(v:Objective)=>{invalidate();setObjective(v);},maxSlope,setMaxSlope:(v:number)=>{selection.current++;invalidate();setMaxSlope(v);},weights,setWeights:(v:typeof weights)=>{invalidate();setWeights(v);},routes,recommended,selected,setSelected,overlay,setOverlay,point,message,busy,choose,calculate,reload:()=>setRetry(v=>v+1),focus,centerRoute:()=>setFocus(f=>f+1)};
+  function resetPlanning(){ selection.current++; request.current?.abort(); setBusy(false); setOrigin(null); setDestination(null); setPoint(null); setRoutes([]); setRecommended(''); setSelected(''); setMode('origin'); setMessage('Selecciona un origen y un destino dentro del área.'); }
+  return {metadata,hazards,origin,destination,mode,setMode,objective,setObjective:(v:Objective)=>{invalidate();setObjective(v);},maxSlope,setMaxSlope:(v:number)=>{selection.current++;invalidate();setMaxSlope(v);},weights,setWeights:(v:typeof weights)=>{invalidate();setWeights(v);},routes,recommended,selected,setSelected,overlay,setOverlay,point,message,busy,choose,calculate,resetPlanning,reload:()=>setRetry(v=>v+1),focus,centerRoute:()=>setFocus(f=>f+1)};
 }
 export type Planning = ReturnType<typeof usePlanning>;
