@@ -15,7 +15,10 @@
 .map-toolbar .nasa-layer-select { font-size: 10px; max-width: 180px; background: #14171f; color: #eee; border: 1px solid #ffffff22; }
 .hazard-canvas { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .nasa-map .draggable-marker { pointer-events: auto; cursor: move; touch-action: none; }
-.coordinate-editor { border: 1px solid var(--line); padding: 10px; margin: 12px 0; min-width: 0; }
+.coordinate-editor { border: 1px solid var(--line); padding: 0; margin: 8px 0; min-width: 0; overflow: hidden; }
+.coordinate-summary { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px; color: var(--soft); background: rgba(255,255,255,.025); text-align: left; }
+.coordinate-summary:hover { background: rgba(255,122,50,.08); }.coordinate-summary > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; flex: 1; }.coordinate-summary strong { color: #f5f5f5; font: 11px var(--mono); }.coordinate-summary small { overflow: hidden; color: var(--muted); font: 9px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.coordinate-badge { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--orange); border-radius: 50%; color: var(--orange); font: 11px var(--mono); }.coordinate-badge.destination { color: #ffdb8a; border-color: #c99b52; }.coordinate-chevron { color: var(--muted); font-size: 18px; transition: transform .2s ease; }.coordinate-editor.expanded .coordinate-chevron { transform: rotate(180deg); }.coordinate-editor-content { padding: 0 10px 10px; }
 .coordinate-editor legend,.planner-label { color: var(--soft); font: 11px var(--mono); }
 .coordinate-fields { display: flex; gap: 6px; }
 .coordinate-fields label { width: 50%; color: var(--muted); font-size: 10px; }

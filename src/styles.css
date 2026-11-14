@@ -132,6 +132,8 @@ h1 { margin: 0; color: #f7f7f4; font: 600 36px/1 var(--condensed); letter-spacin
 .scale span { width: 55px; height: 4px; border-top: 1px solid #dfc8b5; border-right: 1px solid #dfc8b5; border-left: 1px solid #dfc8b5; }
 .marker, .science-marker { position: absolute; z-index: 4; transform: translate(-50%, -50%); }
 .marker { color: var(--orange); filter: drop-shadow(0 0 8px rgba(255,122,50,.9)); }
+.draggable-marker { width: 48px; height: 48px; display: grid; place-items: center; cursor: grab !important; touch-action: none; }
+.draggable-marker:active { cursor: grabbing !important; }.draggable-marker svg { width: 26px; height: 26px; }.draggable-marker span { top: 38px; }
 .marker span { position: absolute; top: 27px; left: 50%; transform: translateX(-50%); padding: 3px 5px; color: #ffcc9c; background: rgba(11,13,18,.86); border: 1px solid rgba(255,122,50,.35); font: 8px var(--mono); white-space: nowrap; }
 .marker.target { color: #ffdb8a; filter: drop-shadow(0 0 8px rgba(255,211,112,.75)); }
 .marker.target span { color: #ffdda1; border-color: rgba(255,211,112,.3); }

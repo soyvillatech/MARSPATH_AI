@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { labels, type Coordinate, type Objective, type Planning } from '../features/planning';
 
 function CoordinateInput({kind,p}:{kind:'origin'|'destination';p:Planning}){
+  const [open,setOpen]=useState(false);
   const current=p[kind];const [lat,setLat]=useState(''),[lon,setLon]=useState('');
   useEffect(()=>{setLat(current?String(current.lat):'');setLon(current?String(current.lon):'');},[current]);
-  return <fieldset className="coordinate-editor"><legend>{kind==='origin'?'Punto de origen':'Destino'}</legend>
-    <div className="coordinate-fields"><label>Latitud<input type="number" step="any" min="-90" max="90" value={lat} onChange={e=>setLat(e.target.value)}/></label><label>Longitud E<input type="number" step="any" min="-180" max="180" value={lon} onChange={e=>setLon(e.target.value)}/></label></div>
+  const title=kind==='origin'?'Punto de origen':'Destino';
+  return <fieldset className={`coordinate-editor ${open?'expanded':''}`}><button type="button" className="coordinate-summary" onClick={()=>setOpen(v=>!v)} aria-expanded={open}><span className={`coordinate-badge ${kind}`}>{kind==='origin'?'A':'B'}</span><span><strong>{title}</strong><small>{current?`${current.lat.toFixed(4)}° N · ${current.lon.toFixed(4)}° E`:'Sin seleccionar'}</small></span><span className="coordinate-chevron">⌄</span></button>
+    {open&&<div className="coordinate-editor-content"><div className="coordinate-fields"><label>Latitud<input type="number" step="any" min="-90" max="90" value={lat} onChange={e=>setLat(e.target.value)}/></label><label>Longitud E<input type="number" step="any" min="-180" max="180" value={lon} onChange={e=>setLon(e.target.value)}/></label></div>
     <button className="outline-btn" disabled={!p.metadata||lat===''||lon===''} onClick={()=>p.choose({lat:Number(lat),lon:Number(lon)} as Coordinate,kind)}>Validar coordenadas</button>
-    <button className="outline-btn" disabled={!p.metadata} aria-pressed={p.mode===kind} onClick={()=>p.setMode(kind)}>Seleccionar {kind==='origin'?'origen':'destino'} en el mapa</button>
+    <button className="outline-btn" disabled={!p.metadata} aria-pressed={p.mode===kind} onClick={()=>p.setMode(kind)}>Seleccionar {kind==='origin'?'origen':'destino'} en el mapa</button></div>}
   </fieldset>;
 }
 export function RoutePlanner({p}:{p:Planning}){
