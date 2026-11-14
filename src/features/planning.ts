@@ -5,7 +5,7 @@ export type Metadata = {provider:string;product:string;resolution_m:number;bound
 export type PointInfo = Coordinate & {elevation_m:number;slope_deg:number;roughness_m:number;relief_m:number;category:string;traversable:boolean;source:string;resolution_m:number};
 export type PlannedRoute = {id:string;kind:Objective;optimal_for:Objective[];geometry:{type:'LineString';coordinates:number[][]};metrics:{distance_m:number;ascent_m:number;descent_m:number;max_slope_deg:number;mean_slope_deg:number;high_risk_percent:number};cost:number;weights:number[];explanation:string;warnings:string[];elevation_profile_m:number[]};
 export type HazardData = {cells:Array<[number,number,number,number,number|null,number|null,number|null,boolean]>;source:string;resolution_m:number};
-export const labels:Record<Objective,string>={short:'Menor distancia',safe:'Menor riesgo',balanced:'Equilibrada'};
+export const labels:Record<Objective,string>={short:'Shortest distance',safe:'Lowest risk',balanced:'Balanced'};
 async function api<T>(path:string,options?:RequestInit):Promise<T>{
   const response=await fetch(path,options);
   const text=await response.text();
