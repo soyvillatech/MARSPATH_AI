@@ -2,14 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { MapPin, Target } from 'lucide-react';
 import { contains, layers, loadCapabilities, visibleTiles, type Bounds, type Capabilities, type LayerKey } from '../services/marsWmts';
 
-type Props = { layer: LayerKey; routeType: string; showScience: boolean; showHazards: boolean; locate: number };
-const route = 'M16 72 C 23 67, 22 56, 31 54 S 40 52, 43 44 S 48 33, 58 38 S 68 58, 82 30';
-// Anchor the existing illustrative geometry to the two coordinates already displayed in the mission panel.
-// Interior vertices, science points and hazards remain illustrative, NOT surveyed positions.
-const demoCoordinate = (x: number,y: number) => [77.521 + (x-16)*(77.489-77.521)/66, 18.444+(y-72)*(18.462-18.444)/-42];
-const science = [[28,39],[63,27],[75,63],[44,72]];
+import type { Planning } from '../features/planning';
 
-export function MarsMap({ layer, routeType, showScience, showHazards, locate }: Props) {
+type Props = { layer: LayerKey; planning: Planning; locate: number };
+export function MarsMap({ layer, planning: p, locate }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const [size,setSize] = useState({width: 800,height: 500});
   const [center,setCenter] = useState([77.45,18.44]);
@@ -18,7 +14,8 @@ export function MarsMap({ layer, routeType, showScience, showHazards, locate }: 
   const [errors,setErrors] = useState<Partial<Record<LayerKey,string>>>({});
   const [retry,setRetry] = useState(0);
   const [tileStates,setTileStates] = useState<Record<string,'ok'|'error'>>({});
-  const drag = useRef<{x:number;y:number;center:number[]} | null>(null);
+  const drag = useRef<{x:number;y:number;center:number[];kind?:'origin'|'destination'} | null>(null);
+  const hazardCanvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => { setCenter([77.45,18.44]); setZoom(11); }, [locate]);
   useEffect(() => {
     const observer = new ResizeObserver(entries => { const {width,height} = entries[0].contentRect; setSize({width,height}); });
@@ -49,27 +46,44 @@ export function MarsMap({ layer, routeType, showScience, showHazards, locate }: 
   const failed = tiles.filter(t => tileStates[t.url] === 'error').length;
   const error = errors[effective] || (failed ? 'No se pudo cargar la cartografía NASA para esta región (teselas incompletas)' : '');
   const point = (lon:number,lat:number) => ({left:(lon-view[0])*ppd,top:(view[3]-lat)*ppd});
-  const a = point(...demoCoordinate(0,0) as [number,number]);
-  const b = point(...demoCoordinate(100,100) as [number,number]);
+  useEffect(() => {
+    const coords=p.routes.find(r=>r.id===p.selected)?.geometry.coordinates;
+    const box=coords?.length ? [Math.min(...coords.map(c=>c[0])),Math.min(...coords.map(c=>c[1])),Math.max(...coords.map(c=>c[0])),Math.max(...coords.map(c=>c[1]))] : p.metadata?.bounds;
+    if(!box)return;
+    setCenter([(box[0]+box[2])/2,(box[1]+box[3])/2]);
+    const scale=Math.min(size.width/(box[2]-box[0]+0.005),size.height/(box[3]-box[1]+0.005))*0.75;
+    setZoom(Math.max(1,Math.min(17,Math.floor(Math.log2(scale*360/512)))));
+  },[p.focus,p.metadata]);
+  useEffect(()=>{
+    const canvas=hazardCanvas.current;if(!canvas)return;
+    canvas.width=size.width;canvas.height=size.height;
+    const ctx=canvas.getContext('2d');if(!ctx||p.overlay==='none'||!p.hazards)return;
+    for(const [west,south,east,north,slope,rough,relief,restricted] of p.hazards.cells){
+      if(east<view[0]||west>view[2]||north<view[1]||south>view[3])continue;
+      if(p.overlay==='restricted'&&!restricted)continue;
+      const score=p.overlay==='roughness' ? (rough??0)*3 : p.overlay==='risk'?Math.max(slope??0,Math.abs(relief??0)*10):slope??0;
+      ctx.fillStyle=slope===null?'#7c8592':p.overlay==='restricted'?'#ef4848':score<=5?'#48c980':score<=10?'#edcf4c':score<=15?'#f58a38':'#e34b4b';
+      ctx.globalAlpha=p.overlay==='restricted'?0.6:0.36;
+      ctx.fillRect((west-view[0])*ppd,(view[3]-north)*ppd,(east-west)*ppd+0.5,(north-south)*ppd+0.5);
+    }
+  },[p.hazards,p.overlay,center,zoom,size]);
+  const eventCoordinate=(e:React.PointerEvent<HTMLDivElement>)=>{const box=e.currentTarget.getBoundingClientRect();return {lon:view[0]+(e.clientX-box.left)/ppd,lat:view[3]-(e.clientY-box.top)/ppd};};
   const zoomBy = (delta:number) => setZoom(z => Math.max(1,Math.min(caps[layer] ? caps[layer]!.matrices.length-1 : 17,z+delta)));
   return <div className="map-stage nasa-map" ref={container} onWheel={e => zoomBy(e.deltaY < 0 ? 1 : -1)}
-    onPointerDown={e => { if ((e.target as HTMLElement).closest('button,select,a')) return; drag.current={x:e.clientX,y:e.clientY,center}; e.currentTarget.setPointerCapture(e.pointerId); }}
-    onPointerMove={e => { if(!drag.current) return; setCenter([Math.max(-179,Math.min(179,drag.current.center[0]-(e.clientX-drag.current.x)/ppd)),Math.max(-89,Math.min(89,drag.current.center[1]+(e.clientY-drag.current.y)/ppd))]); }}
-    onPointerUp={() => { drag.current=null; }} onPointerCancel={() => { drag.current=null; }}>
+    onPointerDown={e => { if ((e.target as Element).closest('button,select,a')) return; const marker=(e.target as Element).closest('[data-marker]'); drag.current={x:e.clientX,y:e.clientY,center,kind:marker?.getAttribute('data-marker') as 'origin'|'destination'|undefined}; e.currentTarget.setPointerCapture(e.pointerId); }}
+    onPointerMove={e => { if(!drag.current||drag.current.kind) return; if(Math.hypot(e.clientX-drag.current.x,e.clientY-drag.current.y)<4)return; setCenter([Math.max(-179,Math.min(179,drag.current.center[0]-(e.clientX-drag.current.x)/ppd)),Math.max(-89,Math.min(89,drag.current.center[1]+(e.clientY-drag.current.y)/ppd))]); }}
+    onPointerUp={e => { const start=drag.current;drag.current=null;if(!start)return;if(start.kind){void p.choose(eventCoordinate(e),start.kind);}else if(Math.hypot(e.clientX-start.x,e.clientY-start.y)<4){void p.choose(eventCoordinate(e));} }} onPointerCancel={() => { drag.current=null; }}>
     <div className="nasa-tiles" aria-label={`Cartografía NASA: ${layers[effective].label}`}>
       {tiles.map(tile => <img key={`${retry}:${tile.url}`} src={tile.url} alt="" draggable={false} style={{position:'absolute',left:tile.left,top:tile.top,width:tile.width,height:tile.height}}
         onLoad={() => setTileStates(old => ({...old,[tile.url]:'ok'}))} onError={() => setTileStates(old => ({...old,[tile.url]:'error'}))} />)}
     </div>
-    <svg className="route-svg" viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Ruta ilustrativa, sin cálculo topográfico">
-      <g transform={`translate(${a.left} ${a.top}) scale(${(b.left-a.left)/100} ${(b.top-a.top)/100})`}>
-        <path d={route} stroke="#ff914c" strokeWidth="3" vectorEffect="non-scaling-stroke"/>
-        <path d={route} stroke="#ffe2bd" strokeWidth="1" strokeDasharray="5 7" vectorEffect="non-scaling-stroke"/>
-        {showHazards && <g fill="#ff4e4533" stroke="#ff4e45" strokeWidth="1" strokeDasharray="4 4"><rect x="45" y="18" width="15" height="13" vectorEffect="non-scaling-stroke"/><rect x="30" y="76" width="20" height="10" vectorEffect="non-scaling-stroke"/></g>}
-      </g>
+    <canvas className="hazard-canvas" ref={hazardCanvas} aria-label="Indicadores topográficos derivados del DEM"/>
+    <svg className="route-svg" viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Área de análisis y rutas calculadas">
+      {p.metadata&&<polygon points={p.metadata.coverage.coordinates[0].map(([lon,lat])=>{const c=point(lon,lat);return `${c.left},${c.top}`;}).join(' ')} fill="none" stroke="#73d6d0" strokeWidth="2" strokeDasharray="6 4"/>}
+      {[...p.routes].sort((a,b)=>Number(a.id===p.selected)-Number(b.id===p.selected)).map(r=><polyline key={r.id} points={r.geometry.coordinates.map(([lon,lat])=>{const c=point(lon,lat);return `${c.left},${c.top}`;}).join(' ')} fill="none" stroke={r.kind==='safe'?'#73d6d0':r.kind==='short'?'#ffe1a1':'#ff914c'} strokeWidth={r.id===p.selected?4:2} opacity={r.id===p.selected?1:0.65}/>) }
     </svg>
-    <div className="marker origin" style={point(77.521,18.444)}><MapPin size={22}/><span>ORIGEN</span></div>
-    <div className="marker target" style={point(77.489,18.462)}><Target size={22}/><span>DESTINO</span></div>
-    {showScience && science.map(([x,y],i) => <div key={i} className="science-marker" style={point(...demoCoordinate(x,y) as [number,number])} title="Punto científico de demostración; ubicación no verificada">✦</div>)}
+    {p.origin&&<div className="marker origin draggable-marker" data-marker="origin" style={point(p.origin.lon,p.origin.lat)} title="Arrastra para cambiar el origen"><MapPin size={22}/><span>ORIGEN</span></div>}
+    {p.destination&&<div className="marker target draggable-marker" data-marker="destination" style={point(p.destination.lon,p.destination.lat)} title="Arrastra para cambiar el destino"><Target size={22}/><span>DESTINO</span></div>}
     <div className="map-label label-region">CRÁTER JEZERO <small>{layers[effective].label}</small></div>
     <div className="map-label label-north">N <span>↑</span></div>
     <div className="zoom-controls"><button aria-label="Acercar mapa" onClick={() => zoomBy(1)}>+</button><button aria-label="Alejar mapa" onClick={() => zoomBy(-1)}>−</button></div>
@@ -77,7 +91,7 @@ export function MarsMap({ layer, routeType, showScience, showHazards, locate }: 
       {effective !== layer && <span> · Respaldo: {layers[effective].label}</span>}
       {error && <button onClick={() => setRetry(r => r+1)}>Reintentar</button>}
     </div>
-    <div className="map-legend"><div className="legend-title">SUPERPOSICIONES SIMULADAS</div><div>{routeType}</div><div>Puntos científicos: {showScience ? '04' : '00'}</div><div>Zonas de peligro: {showHazards ? '02' : '00'}</div></div>
+    <div className="map-legend"><div className="legend-title">ANÁLISIS DEM · 20 m</div><div>Borde cyan: área de análisis</div><div>{p.mode==='origin'?'Clic: seleccionar origen':p.mode==='destination'?'Clic: seleccionar destino':'Clic: inspeccionar terreno'}</div><div>Rutas calculadas: {p.routes.length}</div><div>{p.overlay==='slope'?'Pendiente: ≤5° · ≤10° · ≤15° · >15°':p.overlay==='roughness'?'Rugosidad: ≤1,67 · ≤3,33 · ≤5 · >5 m':p.overlay==='risk'?'Riesgo: máx(pendiente, |relieve| × 10)':p.overlay==='restricted'?'Rojo: restringido':'Capas de análisis ocultas'}</div><div>Verde · amarillo · naranja · rojo</div><div>Gris: análisis insuficiente</div></div>
     <div className="nasa-attribution"><a href="https://trek.nasa.gov/mars/" target="_blank" rel="noreferrer">NASA / JPL · Mars Trek</a> · {layers[effective].resolution} · {center[1].toFixed(4)}° N, {center[0].toFixed(4)}° E</div>
   </div>;
 }

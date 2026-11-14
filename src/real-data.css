@@ -13,3 +13,26 @@
 .nasa-attribution { position: absolute; z-index: 6; bottom: 0; left: 0; right: 0; padding: 6px 10px; background: #0b0d12e8; color: #ccc; font: 9px var(--mono); }
 .nasa-attribution a { color: #ffb06d; }
 .map-toolbar .nasa-layer-select { font-size: 10px; max-width: 180px; background: #14171f; color: #eee; border: 1px solid #ffffff22; }
+.hazard-canvas { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.nasa-map .draggable-marker { pointer-events: auto; cursor: move; touch-action: none; }
+.coordinate-editor { border: 1px solid var(--line); padding: 10px; margin: 12px 0; min-width: 0; }
+.coordinate-editor legend,.planner-label { color: var(--soft); font: 11px var(--mono); }
+.coordinate-fields { display: flex; gap: 6px; }
+.coordinate-fields label { width: 50%; color: var(--muted); font-size: 10px; }
+.coordinate-editor input,.planner-label select { width: 100%; padding: 8px 5px; color: white; background: #151923; border: 1px solid var(--line); margin: 5px 0; }
+.coordinate-editor .outline-btn { width: 100%; margin-top: 7px; white-space: normal; }
+.planner-label { display: block; margin: 14px 0; }
+.planner-label input { display: block; width: 100%; accent-color: var(--orange); }
+.planner-message,.terrain-point,.route-card { font-size: 11px; line-height: 1.6; color: var(--soft); overflow-wrap: anywhere; }
+.terrain-point { margin-top: 14px; padding: 12px; border: 1px solid var(--line); }
+.terrain-point p { margin: 4px 0; }
+.route-card { border: 1px solid var(--line); padding: 12px; margin: 10px 0; }
+.route-card.selected { border-color: var(--orange); }
+.route-card > button:first-child { background: none; color: var(--orange-light); text-align: left; font: 12px var(--mono); padding: 0; }
+.route-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.route-card dd { margin: 0; text-align: right; color: white; }
+.route-card .outline-btn { margin-top: 10px; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.nasa-map .map-legend { font-size: 8px; max-width: 260px; pointer-events: none; }
+@media (max-width: 920px) { .right-panel { position: static; transform: none; width: auto; grid-column: 2; } .panel-scroll { max-height: none; } }
+@media (max-width: 620px) { .right-panel { grid-column: 1; } }

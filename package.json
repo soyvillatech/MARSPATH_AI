@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "api": "uv run --no-project --python .venv/Scripts/python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000",
+    "terrain:prepare": "uv run --no-project --python .venv/Scripts/python.exe scripts/prepare_terrain.py",
+    "test:terrain": "uv run --no-project --python .venv/Scripts/python.exe -m pytest backend -q"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
