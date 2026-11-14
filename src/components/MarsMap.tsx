@@ -3,6 +3,7 @@ import { MapPin, Target } from 'lucide-react';
 import { contains, layers, loadCapabilities, visibleTiles, type Bounds, type Capabilities, type LayerKey } from '../services/marsWmts';
 
 import type { Planning } from '../features/planning';
+import { marsPlaces } from '../data/places';
 
 type Props = { layer: LayerKey; planning: Planning; locate: number };
 export function MarsMap({ layer, planning: p, locate }: Props) {
@@ -13,6 +14,7 @@ export function MarsMap({ layer, planning: p, locate }: Props) {
   const [caps,setCaps] = useState<Partial<Record<LayerKey,Capabilities>>>({});
   const [errors,setErrors] = useState<Partial<Record<LayerKey,string>>>({});
   const [retry,setRetry] = useState(0);
+  const [placePopup,setPlacePopup] = useState<string|null>(null);
   const [tileStates,setTileStates] = useState<Record<string,'ok'|'error'>>({});
   const drag = useRef<{x:number;y:number;center:number[];kind?:'origin'|'destination'} | null>(null);
   const hazardCanvas = useRef<HTMLCanvasElement>(null);
@@ -46,6 +48,7 @@ export function MarsMap({ layer, planning: p, locate }: Props) {
   const failed = tiles.filter(t => tileStates[t.url] === 'error').length;
   const error = errors[effective] || (failed ? 'No se pudo cargar la cartografía NASA para esta región (teselas incompletas)' : '');
   const point = (lon:number,lat:number) => ({left:(lon-view[0])*ppd,top:(view[3]-lat)*ppd});
+  const visiblePlaces = marsPlaces.filter(place => zoom >= place.minZoom && place.lon >= view[0] && place.lon <= view[2] && place.lat >= view[1] && place.lat <= view[3]);
   useEffect(() => {
     const coords=p.routes.find(r=>r.id===p.selected)?.geometry.coordinates;
     const box=coords?.length ? [Math.min(...coords.map(c=>c[0])),Math.min(...coords.map(c=>c[1])),Math.max(...coords.map(c=>c[0])),Math.max(...coords.map(c=>c[1]))] : p.metadata?.bounds;
@@ -84,6 +87,10 @@ export function MarsMap({ layer, planning: p, locate }: Props) {
     </svg>
     {p.origin&&<div className="marker origin draggable-marker" data-marker="origin" style={point(p.origin.lon,p.origin.lat)} title="Arrastra para cambiar el origen"><MapPin size={22}/><span>ORIGEN</span></div>}
     {p.destination&&<div className="marker target draggable-marker" data-marker="destination" style={point(p.destination.lon,p.destination.lat)} title="Arrastra para cambiar el destino"><Target size={22}/><span>DESTINO</span></div>}
+    {visiblePlaces.map(place => { const position=point(place.lon,place.lat); return <div key={place.id} className="place-label-wrap" style={position}>
+      <button className="place-label" type="button" onPointerDown={e=>e.stopPropagation()} onClick={()=>setPlacePopup(placePopup===place.id?null:place.id)} aria-label={`Ver información de ${place.name}`}><span className="place-label-dot"/>{place.name}</button>
+      {placePopup===place.id&&<div className="place-popup" role="dialog"><button className="place-popup-close" onPointerDown={e=>e.stopPropagation()} onClick={()=>setPlacePopup(null)} aria-label="Cerrar">×</button><strong>{place.name}</strong><span>{place.type}</span><small>{place.lat.toFixed(2)}° N · {place.lon.toFixed(2)}° E</small>{place.source&&<small>Fuente: {place.source}</small>}</div>}
+    </div>; })}
     <div className="map-label label-region">CRÁTER JEZERO <small>{layers[effective].label}</small></div>
     <div className="map-label label-north">N <span>↑</span></div>
     <div className="zoom-controls"><button aria-label="Acercar mapa" onClick={() => zoomBy(1)}>+</button><button aria-label="Alejar mapa" onClick={() => zoomBy(-1)}>−</button></div>
