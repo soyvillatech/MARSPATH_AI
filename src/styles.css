@@ -134,6 +134,7 @@ h1 { margin: 0; color: #f7f7f4; font: 600 36px/1 var(--condensed); letter-spacin
 .marker { color: var(--orange); filter: drop-shadow(0 0 8px rgba(255,122,50,.9)); }
 .draggable-marker { width: 48px; height: 48px; display: grid; place-items: center; cursor: grab !important; touch-action: none; }
 .draggable-marker:active { cursor: grabbing !important; }.draggable-marker svg { width: 26px; height: 26px; }.draggable-marker span { top: 38px; }
+.draggable-marker.active { transform: translate(-50%, -50%) scale(1.16); filter: drop-shadow(0 0 12px rgba(255,255,255,.95)) drop-shadow(0 0 16px currentColor); }.draggable-marker.active span { color: #fff; border-color: currentColor; font-weight: 700; }.draggable-marker.origin.active { color: #ff7a32; }.draggable-marker.target.active { color: #ffe08a; }
 .marker span { position: absolute; top: 27px; left: 50%; transform: translateX(-50%); padding: 3px 5px; color: #ffcc9c; background: rgba(11,13,18,.86); border: 1px solid rgba(255,122,50,.35); font: 8px var(--mono); white-space: nowrap; }
 .marker.target { color: #ffdb8a; filter: drop-shadow(0 0 8px rgba(255,211,112,.75)); }
 .marker.target span { color: #ffdda1; border-color: rgba(255,211,112,.3); }
