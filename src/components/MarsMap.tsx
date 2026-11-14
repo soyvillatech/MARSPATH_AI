@@ -60,7 +60,7 @@ export function MarsMap({ layer, planning: p, locate }: Props) {
   useEffect(()=>{
     const canvas=hazardCanvas.current;if(!canvas)return;
     canvas.width=size.width;canvas.height=size.height;
-    const ctx=canvas.getContext('2d');if(!ctx||p.overlay==='none'||!p.hazards)return;
+    const ctx=canvas.getContext('2d');if(!ctx)return;ctx.clearRect(0,0,canvas.width,canvas.height);if(p.overlay==='none'||!p.hazards)return;
     for(const [west,south,east,north,slope,rough,relief,restricted] of p.hazards.cells){
       if(east<view[0]||west>view[2]||north<view[1]||south>view[3])continue;
       if(p.overlay==='restricted'&&!restricted)continue;
@@ -86,6 +86,7 @@ export function MarsMap({ layer, planning: p, locate }: Props) {
       {[...p.routes].sort((a,b)=>Number(a.id===p.selected)-Number(b.id===p.selected)).map(r=><polyline key={r.id} points={r.geometry.coordinates.map(([lon,lat])=>{const c=point(lon,lat);return `${c.left},${c.top}`;}).join(' ')} fill="none" stroke={r.kind==='safe'?'#73d6d0':r.kind==='short'?'#ffe1a1':'#ff914c'} strokeWidth={r.id===p.selected?4:2} opacity={r.id===p.selected?1:0.65}/>) }
     </svg>
     {p.origin&&<div className={`marker origin draggable-marker ${p.mode==='origin'?'active':''}`} data-marker="origin" onPointerDown={()=>p.setMode('origin')} style={point(p.origin.lon,p.origin.lat)} title="Clic para activar y luego clic en el mapa, o arrastra para mover"><MapPin size={22}/><span>ORIGEN</span></div>}
+    {p.origin&&p.routes.length>0&&<button className="origin-astronaut" style={point(p.origin.lon,p.origin.lat)} onPointerDown={e=>e.stopPropagation()} onClick={()=>p.centerRoute()} aria-label="Ver resultados de ruta"><img src="/assets/mars-astronaut.png" alt="Astronauta en el origen"/><span>Ver resultados</span></button>}
     {p.destination&&<div className={`marker target draggable-marker ${p.mode==='destination'?'active':''}`} data-marker="destination" onPointerDown={()=>p.setMode('destination')} style={point(p.destination.lon,p.destination.lat)} title="Clic para activar y luego clic en el mapa, o arrastra para mover"><Target size={22}/><span>DESTINO</span></div>}
     {visiblePlaces.map(place => { const position=point(place.lon,place.lat); return <div key={place.id} className="place-label-wrap" style={position}>
       <button className="place-label" type="button" onPointerDown={e=>e.stopPropagation()} onClick={()=>setPlacePopup(placePopup===place.id?null:place.id)} aria-label={`Ver información de ${place.name}`}><span className="place-label-dot"/>{place.name}</button>

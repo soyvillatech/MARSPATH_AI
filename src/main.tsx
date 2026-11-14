@@ -29,6 +29,9 @@ function App() {
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, []);
+  useEffect(() => {
+    if (p.routes.length > 0) setResultsOpen(true);
+  }, [p.routes.length]);
   const selectedRoute = p.routes.find(route => route.id === p.selected);
   const exportRoute = () => { if (!selectedRoute) return; const blob = new Blob([JSON.stringify({ type:'Feature', properties:{ id:selectedRoute.id, kind:selectedRoute.kind, metrics:selectedRoute.metrics }, geometry:selectedRoute.geometry }, null, 2)], {type:'application/geo+json'}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download=`marspath-${selectedRoute.id}.geojson`; link.click(); URL.revokeObjectURL(url); };
   return <div className="map-first-app">
